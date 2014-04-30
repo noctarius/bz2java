@@ -16,6 +16,8 @@ import java.nio.file.StandardCopyOption;
 
 final class NativeUtils {
 
+    static final int BUFFER_SIZE = 1024 * 1024;
+
     private static final Platform PLATFORM = Platform.getNativePlatform();
 
     private static final String LIBRARY_NAME = buildLibraryName();
@@ -29,6 +31,37 @@ final class NativeUtils {
     }
 
     private NativeUtils() {
+    }
+
+    static void handleNativeError(int result) {
+        switch (result) {
+            case LibBz2.BZ_MEM_ERROR:
+                throw new OutOfMemoryError("Out of native memory for compression / decompression");
+
+            case LibBz2.BZ_PARAM_ERROR:
+                throw new IllegalArgumentException("Illegal parameter in native code");
+
+            default:
+                throw new InternalError("Native error: " + result);
+        }
+    }
+
+    static long allocateMemory(int bufferSize) {
+        return UNSAFE.allocateMemory(bufferSize);
+    }
+
+    static void freeMemory(long address) {
+        UNSAFE.freeMemory(address);
+    }
+
+    static int copyToNative(byte[] array, long address, int length) {
+        UNSAFE.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, address, length);
+        return length;
+    }
+
+    static int copyFromNative(long address, byte[] array, int length) {
+        UNSAFE.copyMemory(null, address, array, Unsafe.ARRAY_BYTE_BASE_OFFSET, length);
+        return length;
     }
 
     static LibBz2 getLibBz2() {

@@ -15,9 +15,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-public class Bzip2Compressor
-        extends AbstractBzip2Adapter {
+import static com.noctarius.bz2java.NativeUtils.BUFFER_SIZE;
+import static com.noctarius.bz2java.NativeUtils.allocateMemory;
+import static com.noctarius.bz2java.NativeUtils.copyFromNative;
+import static com.noctarius.bz2java.NativeUtils.copyToNative;
+import static com.noctarius.bz2java.NativeUtils.freeMemory;
+import static com.noctarius.bz2java.NativeUtils.getLibBz2;
+import static com.noctarius.bz2java.NativeUtils.handleNativeError;
+import static com.noctarius.bz2java.NativeUtils.newBzStream;
 
+public class Bzip2Compressor {
+
+    private static final LibBz2 LIB_BZ_2 = getLibBz2();
 
     public void compress(Path source, Path target)
             throws IOException {
@@ -25,7 +34,7 @@ public class Bzip2Compressor
         compress(source, target, null);
     }
 
-    public void compress(Path source, Path target, Bz2Callback callback)
+    public void compress(Path source, Path target, Bzip2Callback callback)
             throws IOException {
 
         long fileLength = Files.size(source);
@@ -42,7 +51,7 @@ public class Bzip2Compressor
         compress(input, output, -1, null);
     }
 
-    public void compress(InputStream input, OutputStream output, long inputByteLength, Bz2Callback callback)
+    public void compress(InputStream input, OutputStream output, long inputByteLength, Bzip2Callback callback)
             throws IOException {
 
         ReadableByteChannel inputChannel = Channels.newChannel(input);
@@ -56,13 +65,13 @@ public class Bzip2Compressor
         compress(input, output, -1, null);
     }
 
-    public void compress(ReadableByteChannel input, WritableByteChannel output, long inputByteLength, Bz2Callback callback)
+    public void compress(ReadableByteChannel input, WritableByteChannel output, long inputByteLength, Bzip2Callback callback)
             throws IOException {
 
         long processed = 0;
 
         // Initialize native library
-        BZ_STREAM bzStream = NativeUtils.newBzStream();
+        BZ_STREAM bzStream = newBzStream();
 
         int result = LIB_BZ_2.BZ2_bzCompressInit(bzStream, 1, 1, 0);
         if (result != LibBz2.BZ_OK) {
