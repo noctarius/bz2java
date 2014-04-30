@@ -179,13 +179,14 @@ public final class Bzip2Decompressor {
             ByteBuffer inputBuffer = ByteBuffer.wrap(inByteArray);
 
             int bytes;
-            while ((bytes = input.read(inputBuffer)) != -1) {
+            boolean finish = false;
+            while ((bytes = input.read(inputBuffer)) != -1 && !finish) {
                 // Copy input data to native memory
                 int availBytes = inputBuffer.position();
                 copyToNative(inByteArray, inputPtr, availBytes);
 
                 // Call decompression
-                bzDecompress(bzStream, inputPtr, outputPtr, outByteArray, output, availBytes, inputBuffer);
+                finish = bzDecompress(bzStream, inputPtr, outputPtr, outByteArray, output, availBytes, inputBuffer);
 
                 // Call callback if set
                 if (callback != null) {
@@ -198,11 +199,10 @@ public final class Bzip2Decompressor {
             inputBuffer.position(0);
             inputBuffer.limit(0);
 
-            boolean finish;
-            do {
+            while (!finish) {
                 // Call decompression until all data is written
                 finish = bzDecompress(bzStream, inputPtr, outputPtr, outByteArray, output, 0, inputBuffer);
-            } while (!finish);
+            }
 
             // Finish decompression
             LIB_BZ_2.BZ2_bzDecompressEnd(bzStream);
@@ -229,18 +229,11 @@ public final class Bzip2Decompressor {
         int result = LIB_BZ_2.BZ2_bzDecompress(bzStream);
         switch (result) {
             case LibBz2.BZ_STREAM_END:
-                if (availBytes > 0) {
-                    throw new IllegalStateException();
-                }
-                break;
-
-            case LibBz2.BZ_RUN_OK:
-            case LibBz2.BZ_FLUSH_OK:
-            case LibBz2.BZ_FINISH_OK:
+            case LibBz2.BZ_OK:
                 break;
 
             default:
-                throw new InternalError("Error while compression: " + result);
+                throw new InternalError("Error while decompression: " + result);
         }
 
         // Reposition and compact the buffer
