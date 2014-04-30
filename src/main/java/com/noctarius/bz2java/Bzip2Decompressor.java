@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import static com.noctarius.bz2java.NativeUtils.BUFFER_SIZE;
+import static com.noctarius.bz2java.NativeUtils.WRITE_OPEN_OPTIONS;
 import static com.noctarius.bz2java.NativeUtils.allocateMemory;
 import static com.noctarius.bz2java.NativeUtils.copyFromNative;
 import static com.noctarius.bz2java.NativeUtils.copyToNative;
@@ -26,48 +27,99 @@ import static com.noctarius.bz2java.NativeUtils.newBzStream;
 
 /**
  * <p>
- * This class implements the binding logic to handle decompression of bz2 in native code. The implementation
- * itself is fully threadsafe and multiple decompression calls can be executed in parallel only limited by
+ * This class implements the binding logic to handle compression of bz2 in native code. The implementation
+ * itself is fully threadsafe and multiple compression calls can be executed in parallel only limited by
  * available RAM since the bz2 compression algorithm isn't very memory efficient but fast and pretty good
  * in compression ratio.
  * </p>
  * <p>
- * A common example on how to use it is like the below:
+ * A common example on how to use it to directly compress a file using {@link java.nio.file.Path}s is like
+ * the one below:
  * <pre>
  *     Path sourcePath = Paths.get("/my/input/file.tar");
  *     Path targetPath = Paths.get("/my/target/path/");
- *     Path outputPath = Bzip2Utils.getUncompressedFilename(targetPath, sourcePath.getFilename());
- *     Bzip2Decompressor.decompress(sourcePath, outputPath, buildCallback());
+ *     String uncompressedFilename = Bzip2Utils.getUncompressedFilename(sourcePath.getFilename());
+ *     Path outputPath = targetPath.resolve(sourcePath.getFilename());
+ *     Bzip2Compressor.compress(sourcePath, outputPath, buildCallback());
  * </pre>
  * </p>
+ * <p>
+ * There are also more options available like using {@link java.io.InputStream} and {@link java.io.OutputStream}
+ * or {@link java.nio.channels.ReadableByteChannel} and {@link java.nio.channels.WritableByteChannel} for input
+ * and output.
+ * </p>
  */
-public class Bzip2Decompressor {
+public final class Bzip2Decompressor {
 
     private static final LibBz2 LIB_BZ_2 = getLibBz2();
 
+    private Bzip2Decompressor() {
+    }
+
+    /**
+     * Decompresses an input file supplied though a {@link java.nio.file.Path} reference and writes the uncompressed
+     * bytestream to the given output path.
+     *
+     * @param source Input path (file) to read compressed data from
+     * @param target Output path (file) to write uncompressed data to
+     * @throws IOException If an filesystem or decompression problem is raised this exception is thrown
+     */
     public static void decompress(Path source, Path target)
             throws IOException {
 
         decompress(source, target, null);
     }
 
+    /**
+     * Decompresses an input file supplied though a {@link java.nio.file.Path} reference and writes the uncompressed
+     * bytestream to the given output path. For every processed data chunk the caller gets notified using the
+     * callback instance.<br/>
+     * If callback is null it will silently ignored (a call with null parameter is equivalent to
+     * {@link #decompress(java.nio.file.Path, java.nio.file.Path)}.
+     *
+     * @param source   Input path (file) to read compressed data from
+     * @param target   Output path (file) to write uncompressed data to
+     * @param callback The callback to notify on decompression progress or null to work silently
+     * @throws IOException If an filesystem or decompression problem is raised this exception is thrown
+     */
     public static void decompress(Path source, Path target, Bzip2Callback callback)
             throws IOException {
 
         long fileLength = Files.size(source);
         try (FileChannel sourceChannel = FileChannel.open(source, StandardOpenOption.READ);
-             FileChannel targetChannel = FileChannel.open(target, StandardOpenOption.CREATE)) {
+             FileChannel targetChannel = FileChannel.open(target, WRITE_OPEN_OPTIONS)) {
 
             decompress(sourceChannel, targetChannel, fileLength, callback);
         }
     }
 
+    /**
+     * Decompresses an inputstream supplied though a {@link java.io.InputStream} reference and writes the
+     * uncompressed bytestream to the given output stream.
+     *
+     * @param input  Input stream to read compressed data from
+     * @param output Output stream to write uncompressed data to
+     * @throws IOException If an filesystem or decompression problem is raised this exception is thrown
+     */
     public static void decompress(InputStream input, OutputStream output)
             throws IOException {
 
         decompress(input, output, -1, null);
     }
 
+    /**
+     * Decompresses an inputstream supplied though a {@link java.io.InputStream} reference and writes the
+     * uncompressed bytestream to the given output stream. For every processed data chunk the caller gets
+     * notified using the callback instance.<br/>
+     * If callback is null it will silently ignored (a call with null parameter is equivalent to
+     * {@link #decompress(java.io.InputStream, java.io.OutputStream)}.
+     *
+     * @param input           Input stream to read compressed data from
+     * @param output          Output stream to write uncompressed data to
+     * @param inputByteLength Defines the length of the complete input data to calculate percentage values on callback
+     * @param callback        The callback to notify on decompression progress or null to work silently
+     * @throws IOException If an filesystem or decompression problem is raised this exception is thrown
+     */
     public static void decompress(InputStream input, OutputStream output, long inputByteLength, Bzip2Callback callback)
             throws IOException {
 
@@ -76,12 +128,33 @@ public class Bzip2Decompressor {
         decompress(inputChannel, outputChannel, inputByteLength, callback);
     }
 
+    /**
+     * Decompresses an input bytechannel supplied though a {@link java.nio.channels.ReadableByteChannel} reference
+     * and writes the uncompressed bytestream to the given output channel.
+     *
+     * @param input  Input bytechannel to read compressed data from
+     * @param output Output bytechannel to write uncompressed data to
+     * @throws IOException If an filesystem or decompression problem is raised this exception is thrown
+     */
     public static void decompress(ReadableByteChannel input, WritableByteChannel output)
             throws IOException {
 
         decompress(input, output, -1, null);
     }
 
+    /**
+     * Deompresses an input bytechannel supplied though a {@link java.nio.channels.ReadableByteChannel} reference
+     * and writes the uncompressed bytestream to the given output channel. For every processed data chunk the caller
+     * gets notified using the callback instance.<br/>
+     * If callback is null it will silently ignored (a call with null parameter is equivalent to
+     * {@link #decompress(java.nio.channels.ReadableByteChannel, java.nio.channels.WritableByteChannel)}.
+     *
+     * @param input           Input bytechannel to read compressed data from
+     * @param output          Output bytechannel to write uncompressed data to
+     * @param inputByteLength Defines the length of the complete input data to calculate percentage values on callback
+     * @param callback        The callback to notify on decompression progress or null to work silently
+     * @throws IOException If an filesystem or decompression problem is raised this exception is thrown
+     */
     public static void decompress(ReadableByteChannel input, WritableByteChannel output, long inputByteLength,
                                   Bzip2Callback callback)
             throws IOException {

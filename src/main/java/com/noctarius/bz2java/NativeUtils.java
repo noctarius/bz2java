@@ -13,10 +13,15 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
 
 final class NativeUtils {
 
     static final int BUFFER_SIZE = 1024 * 1024;
+
+    static final EnumSet<StandardOpenOption> WRITE_OPEN_OPTIONS = EnumSet
+            .of(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 
     private static final Platform PLATFORM = Platform.getNativePlatform();
 
@@ -93,20 +98,20 @@ final class NativeUtils {
         Platform.CPU cpu = PLATFORM.getCPU();
         switch (os) {
             case DARWIN:
-                return PLATFORM.mapLibraryName("libbz2.dynlib");
+                return PLATFORM.mapLibraryName("bz2");
 
             case LINUX:
-                return PLATFORM.mapLibraryName("libbz2.so");
+                return PLATFORM.mapLibraryName("bz2");
 
             case SOLARIS:
-                return PLATFORM.mapLibraryName("libbz2.so");
+                return PLATFORM.mapLibraryName("bz2");
 
             case WINDOWS:
                 return extractWindowsLibrary(cpu);
 
             default:
                 if (PLATFORM.isBSD()) {
-                    return PLATFORM.mapLibraryName("libbz2.so");
+                    return PLATFORM.mapLibraryName("bz2");
                 }
 
                 throw new RuntimeException("Unsupported operating system for bz2java");
