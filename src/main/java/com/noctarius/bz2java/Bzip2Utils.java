@@ -41,7 +41,13 @@ public final class Bzip2Utils {
      * @return The filename for the uncompressed file
      */
     public static String getUncompressedFilename(String filename) {
-        // TODO Lookup mapping :)
+        String lcFilename = filename.toLowerCase();
+        for (Map.Entry<String, String> entry : SUFFIXES.entrySet()) {
+            if (lcFilename.endsWith(entry.getKey())) {
+                int suffixLength = entry.getKey().length();
+                return filename.substring(0, filename.length() - suffixLength) + entry.getValue();
+            }
+        }
         return filename.replace(".bz2", "");
     }
 }
