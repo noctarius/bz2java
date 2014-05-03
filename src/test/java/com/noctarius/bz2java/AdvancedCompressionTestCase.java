@@ -1,21 +1,38 @@
 package com.noctarius.bz2java;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-public class CompressionTestCase {
+@RunWith(Parameterized.class)
+public class AdvancedCompressionTestCase {
 
-    private static final long FILE_SIZE = 1024 * 1024 * 10;
+    @Parameterized.Parameters(name = "testCompressionVariousFilesizes -  {index}, fileSize: {0} bytes")
+    public static Iterable<Object[]> parameters() {
+        return Arrays.asList(new Object[][]{ //
+                                             {1024}, {2048}, {4096}, {8192}, {1024 * 1024}, //
+                                             {2048 * 1024}, {4096 * 1024}, {8192 * 1024}, //
+                                             {1024 * 1024 * 10}, {1024 * 1024 * 100} //
+        });
+    }
+
+    private final int fileSize;
+
+    public AdvancedCompressionTestCase(int fileSize) {
+        this.fileSize = fileSize;
+    }
 
     @Test
-    public void testCompressionRoundtrip()
+    public void testCompressionVariousFilesizes()
             throws Exception {
 
-        Path file = TestUtils.generateRandomFile(FILE_SIZE);
+        Path file = TestUtils.generateRandomFile(fileSize);
         Path tempPath = Files.createTempDirectory("bzip2");
         Files.createDirectories(tempPath);
 
