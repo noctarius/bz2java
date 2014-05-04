@@ -146,6 +146,35 @@
             </plugin>
 
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <show>public</show>
+                    <javaApiLinks>
+                        <property>
+                            <name>api_1.7</name>
+                            <value>http://download.oracle.com/javase/1.7.0/docs/api/</value>
+                        </property>
+                    </javaApiLinks>
+                    <sourceFileExcludes>
+                        <exclude>com/noctarius/bz2java/jnr/*</exclude>
+                    </sourceFileExcludes>
+                    <sourceFileIncludes>
+                        <include>com/noctarius/bz2java/*</include>
+                    </sourceFileIncludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.7.0.201403182114</version>
@@ -175,27 +204,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9</version>
-                <configuration>
-                    <show>public</show>
-                    <sourceFileExcludes>
-                        <exclude>com/noctarius/bz2lib/jnr/LibBz2.java</exclude>
-                        <exclude>com/noctarius/bz2lib/jnr/BZ_STREAM.java</exclude>
-                    </sourceFileExcludes>
-                    <sourceFileIncludes>
-                        <include>com/noctarius/bz2lib/*.java</include>
-                    </sourceFileIncludes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
-
 
     <profiles>
         <profile>
