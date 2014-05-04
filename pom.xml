@@ -19,13 +19,63 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.noctarius</groupId>
+    <groupId>com.noctarius.bz2java</groupId>
     <artifactId>bz2java</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>bz2java</name>
+    <description>Java wrapper for native libbz2 library</description>
+    <inceptionYear>2014</inceptionYear>
+    <packaging>jar</packaging>
 
     <properties>
         <java.compiler.version>1.7</java.compiler.version>
     </properties>
+
+    <developers>
+        <developer>
+            <id>cengelbert</id>
+            <name>Christoph Engelbert (noctarius)</name>
+            <email>noctarius@apache.org</email>
+            <url>http://www.sourceprojects.org</url>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus Snapshots</name>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <name>Nexus Release Repository</name>
+            <url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git://github.com/noctarius/bz2java.git</connection>
+        <developerConnection>scm:git:git@github.com:noctarius/bz2java.git</developerConnection>
+        <url>https://github.com/noctarius/bz2java/</url>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/noctarius/bz2java/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>Jenkins</system>
+        <url>https://noctarius.ci.cloudbees.com/job/bz2java</url>
+    </ciManagement>
 
     <dependencies>
         <dependency>
@@ -52,6 +102,131 @@
                     <target>${java.compiler.version}</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>0.9</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>README.md</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <show>public</show>
+                            <sourceFileExcludes>
+                                <exclude>com/noctarius/castmapr/client/*.java</exclude>
+                                <exclude>com/noctarius/castmapr/core/*.java</exclude>
+                                <exclude>com/noctarius/castmapr/core/operation/*.java</exclude>
+                            </sourceFileExcludes>
+                            <sourceFileIncludes>
+                                <include>com/noctarius/castmapr/spi/*.java</include>
+                                <include>com/noctarius/castmapr/MapReduceTask.java</include>
+                                <include>com/noctarius/castmapr/MapReduceTaskFactory.java</include>
+                            </sourceFileIncludes>
+                            <excludePackageNames>*.core.*:*.core.operation.*:*.client.*</excludePackageNames>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                    <show>public</show>
+                    <sourceFileExcludes>
+                        <exclude>com/noctarius/bz2lib/jnr/LibBz2.java</exclude>
+                        <exclude>com/noctarius/bz2lib/jnr/BZ_STREAM.java</exclude>
+                    </sourceFileExcludes>
+                    <sourceFileIncludes>
+                        <include>com/noctarius/bz2lib/*.java</include>
+                    </sourceFileIncludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+
+
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <repositories>
+        <repository>
+            <id>sonatype-nexus-public</id>
+            <name>SonaType public snapshots and releases repository</name>
+            <url>https://oss.sonatype.org/content/groups/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
