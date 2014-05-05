@@ -49,14 +49,14 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>cloudbees-snapshot</id>
-            <name>Cloudbees Snapshot Repository</name>
-            <url>dav:https://repository-noctarius.forge.cloudbees.com/snapshot</url>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype OSS Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </snapshotRepository>
         <repository>
-            <id>cloudbees-release</id>
-            <name>Cloudbees Release Repository</name>
-            <url>dav:https://repository-noctarius.forge.cloudbees.com/release</url>
+            <id>sonatype-nexus-staging</id>
+            <name>Sonatype OSS Staging</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 

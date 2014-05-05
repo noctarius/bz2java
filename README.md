@@ -38,7 +38,7 @@ public class Bz2Packer {
   <dependency>
     <groupId>com.noctarius.bz2java</groupId>
     <artifactId>bz2java</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </dependency>
 </dependencies>
 ```
@@ -49,7 +49,7 @@ public class Bz2Packer {
   <dependency>
     <groupId>com.noctarius.bz2java</groupId>
     <artifactId>bz2java</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
   </dependency>
 </dependencies>
 <repositories>
